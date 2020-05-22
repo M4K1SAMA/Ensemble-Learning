@@ -1,5 +1,6 @@
 from train import *
 
+
 def main():
     train_X, train_Y, test_X = load_data()
     print("loaded")
@@ -8,7 +9,8 @@ def main():
     print("trained")
     with open('output', 'r') as f:
         for out in res:
-            f.writelines()
-            f.write(str(res) + '\n')
+            f.write(str(out) + '\n')
 
-main()
+
+if __name__ == '__main__':
+    main()
