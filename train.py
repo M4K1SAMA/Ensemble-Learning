@@ -6,6 +6,7 @@ import gensim
 import nltk
 import re
 import os
+import time
 
 bagging = 10
 
@@ -26,7 +27,10 @@ def load_data():
         rev = train_df['reviewText'].values
         sentences = []
         for i in range(len(sum)):
-            sentences += re.sub('[%s]' % puncs, ' ', (str)(sum[i]).lower()) + re.sub('[%s]' % puncs, ' ', (str)(rev[i]).lower())
+            s = re.sub('[%s]' % puncs, ' ', (str)(sum[i]).lower())
+            r = re.sub('[%s]' % puncs, ' ', (str)(rev[i]).lower())
+            sentences.append(s + r)
+            time.sleep(1)
 
         for sent in sentences:
             X.append(nltk.word_tokenize(sent))
@@ -51,7 +55,7 @@ def load_data():
         rev = test_df['reviewText'].values
         sentences = []
         for i in range(len(sum)):
-            sentences += re.sub('[%s]' % puncs, ' ', (str)(sum[i]).lower()) + re.sub('[%s]' % puncs, ' ', (str)(rev[i]).lower())
+            sentences.append(re.sub('[%s]' % puncs, ' ', (str)(sum[i]).lower()) + re.sub('[%s]' % puncs, ' ', (str)(rev[i]).lower()))
         for sent in sentences:
             test_X.append(nltk.word_tokenize(sent))
         with open('test_X', 'wb') as f:
@@ -61,34 +65,35 @@ def load_data():
 
 def process(X):
     ret = []
-    if 'product' in os.listdir('.'):
-        with open('product', 'rb') as f:
-            ret = pickle.load(f)
-    else:
-        for i in X:
-            tmp = [0, 0, 0]
-            for word in i:
-                try:
-                    positive = w2v.similarity('good', word)
-                    negative = w2v.similarity('bad', word)
-                    nt = w2v.similarity('not', word)
-                    if positive > negative and positive > nt:
-                        tmp[0] += positive
-                    elif negative > positive and negative > nt:
-                        tmp[1] += negative
-                    elif nt > positive and nt > negative:
-                        tmp[2] += nt
-                except KeyError:
-                    pass
-            ret.append(tmp)
-        with open('product', 'wb') as f:
-            pickle.dump(ret, f)
+    # if 'product' in os.listdir('.'):
+    #     with open('product', 'rb') as f:
+    #         ret = pickle.load(f)
+    # else:
+    for i in X:
+        tmp = [0, 0, 0]
+        for word in i:
+            try:
+                positive = w2v.similarity('good', word)
+                negative = w2v.similarity('bad', word)
+                nt = w2v.similarity('not', word)
+                if positive > negative and positive > nt:
+                    tmp[0] += positive
+                elif negative > positive and negative > nt:
+                    tmp[1] += negative
+                elif nt > positive and nt > negative:
+                    tmp[2] += nt
+            except KeyError:
+                pass
+        ret.append(tmp)
+        # with open('product', 'wb') as f:
+        #     pickle.dump(ret, f)
     return ret
 
 
 def train(X, Y):
     clf = tree.DecisionTreeClassifier()
     X = process(X)
+    print(len(X))
     for i in range(bagging):
         print('training %i'%i)
         subX = []
@@ -99,7 +104,8 @@ def train(X, Y):
             subY.append(Y[rand])
         clf.fit(subX, subY)
         print("wrote %i"%i)
-        pickle.dump('models/DTree_%i.pickle'%i)
+        with open('models/DTree_%i.pickle', 'wb') as f:
+            pickle.dump(clf, f)
 
 
 def test(X):
@@ -107,7 +113,8 @@ def test(X):
     clfs = []
     X = process(X)
     for i in range(bagging):
-        clfs.append(pickle.load('models/DTree_%i.pickle'%i))
+        with open('models/DTree_%i.pickle', 'rb') as f:
+            clfs.append(pickle.load(f))
     for i in len(X):
         tmp = []
         for clf in clfs:
