@@ -30,7 +30,6 @@ def load_data():
             s = re.sub('[%s]' % puncs, ' ', (str)(sum[i]).lower())
             r = re.sub('[%s]' % puncs, ' ', (str)(rev[i]).lower())
             sentences.append(s + r)
-            time.sleep(1)
 
         for sent in sentences:
             X.append(nltk.word_tokenize(sent))
@@ -63,36 +62,36 @@ def load_data():
     return X, Y, test_X
 
 
-def process(X):
+def process(X, file):
     ret = []
-    # if 'product' in os.listdir('.'):
-    #     with open('product', 'rb') as f:
-    #         ret = pickle.load(f)
-    # else:
-    for i in X:
-        tmp = [0, 0, 0]
-        for word in i:
-            try:
-                positive = w2v.similarity('good', word)
-                negative = w2v.similarity('bad', word)
-                nt = w2v.similarity('not', word)
-                if positive > negative and positive > nt:
-                    tmp[0] += positive
-                elif negative > positive and negative > nt:
-                    tmp[1] += negative
-                elif nt > positive and nt > negative:
-                    tmp[2] += nt
-            except KeyError:
-                pass
-        ret.append(tmp)
-        # with open('product', 'wb') as f:
-        #     pickle.dump(ret, f)
+    if file in os.listdir('.'):
+        with open(file, 'rb') as f:
+            ret = pickle.load(f)
+    else:
+        for i in X:
+            tmp = [0, 0, 0]
+            for word in i:
+                try:
+                    positive = w2v.similarity('good', word)
+                    negative = w2v.similarity('bad', word)
+                    nt = w2v.similarity('not', word)
+                    if positive > negative and positive > nt:
+                        tmp[0] += positive
+                    elif negative > positive and negative > nt:
+                        tmp[1] += negative
+                    elif nt > positive and nt > negative:
+                        tmp[2] += nt
+                except KeyError:
+                    pass
+            ret.append(tmp)
+        with open(file, 'wb') as f:
+            pickle.dump(ret, f)
     return ret
 
 
 def train(X, Y):
     clf = tree.DecisionTreeClassifier()
-    X = process(X)
+    X = process(X, 'train_product')
     print(len(X))
     for i in range(bagging):
         print('training %i'%i)
@@ -104,18 +103,18 @@ def train(X, Y):
             subY.append(Y[rand])
         clf.fit(subX, subY)
         print("wrote %i"%i)
-        with open('models/DTree_%i.pickle', 'wb') as f:
+        with open('models/DTree_%i.pickle'%i, 'wb') as f:
             pickle.dump(clf, f)
 
 
 def test(X):
     ret = []
     clfs = []
-    X = process(X)
+    X = process(X, 'test_product')
     for i in range(bagging):
-        with open('models/DTree_%i.pickle', 'rb') as f:
+        with open('models/DTree_%i.pickle'%i, 'rb') as f:
             clfs.append(pickle.load(f))
-    for i in len(X):
+    for i in range(len(X)):
         tmp = []
         for clf in clfs:
             res = clf.predict(X[i])
