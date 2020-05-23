@@ -4,9 +4,8 @@ import nltk
 
 import gensim
 
-model = gensim.models.Word2Vec.load('w2v_200')
+sentensor = nltk.data.load('tokenizers/punkt/english.pickle')
 
-print(model.similarity('good', 'bad'))
+print(nltk.word_tokenize('dwa. daww'))
 
-print(model.most_similar('tadwhbdwj'))
-
+print(sentensor.tokenize('dwa. dw'))

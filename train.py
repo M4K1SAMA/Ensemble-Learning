@@ -24,10 +24,9 @@ def load_data():
         train_df = pd.read_csv('train.csv', sep='\t')
         sum = train_df['summary'].values
         rev = train_df['reviewText'].values
-        sentensor = nltk.data.load('tokenizers/punkt/english.pickle')
         sentences = []
         for i in range(len(sum)):
-            sentences += sentensor.tokenize(re.sub('[%s]' % puncs, '. ', (str)(sum[i]).lower())) + ' ' + sentensor.tokenize(re.sub('[%s]' % puncs, '. ', (str)(rev[i]).lower()))
+            sentences += re.sub('[%s]' % puncs, ' ', (str)(sum[i]).lower()) + re.sub('[%s]' % puncs, ' ', (str)(rev[i]).lower())
 
         for sent in sentences:
             X.append(nltk.word_tokenize(sent))
@@ -50,11 +49,9 @@ def load_data():
         test_df = pd.read_csv('test.csv', sep='\t')
         sum = test_df['summary'].values
         rev = test_df['reviewText'].values
-        sentensor = nltk.data.load('tokenizers/punkt/english.pickle')
         sentences = []
         for i in range(len(sum)):
-            sentences += sentensor.tokenize(re.sub('[%s]' % puncs, '. ', (str)(sum[i]).lower()))
-            sentences += sentensor.tokenize(re.sub('[%s]' % puncs, '. ', (str)(rev[i]).lower()))
+            sentences += re.sub('[%s]' % puncs, ' ', (str)(sum[i]).lower()) + re.sub('[%s]' % puncs, ' ', (str)(rev[i]).lower())
         for sent in sentences:
             test_X.append(nltk.word_tokenize(sent))
         with open('test_X', 'wb') as f:
